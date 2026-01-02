@@ -13,7 +13,37 @@ import { projects, Project } from "@/data/projects";
 
 export default function Home() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  
+  // Contact form state
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [formMessage, setFormMessage] = useState("");
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormStatus("loading");
+    
+    try {
+      const response = await fetch("http://localhost:3002/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      
+      if (response.ok) {
+        setFormStatus("success");
+        setFormMessage("Message sent successfully! ✨");
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        const data = await response.json();
+        setFormStatus("error");
+        setFormMessage(data.message || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setFormStatus("error");
+      setFormMessage("Unable to connect to server. Please try again later.");
+    }
+  };
   return (
     <div className="parallax-container">
       {/* Scroll Progress Bar */}
@@ -144,12 +174,15 @@ export default function Home() {
             </p>
 
             {/* Contact Form */}
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid md:grid-cols-2 gap-6">
                 <ScrollReveal direction="left" delay={0.1}>
                   <input
                     type="text"
                     placeholder="Name"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-6 py-4 rounded-xl glass border border-[var(--primary)]/20 bg-transparent text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--primary)] focus:shadow-lg focus:shadow-[var(--primary)]/10 transition-all duration-300"
                   />
                 </ScrollReveal>
@@ -157,6 +190,9 @@ export default function Home() {
                   <input
                     type="email"
                     placeholder="Email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-6 py-4 rounded-xl glass border border-[var(--primary)]/20 bg-transparent text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--primary)] focus:shadow-lg focus:shadow-[var(--primary)]/10 transition-all duration-300"
                   />
                 </ScrollReveal>
@@ -165,16 +201,32 @@ export default function Home() {
                 <textarea
                   placeholder="Your message..."
                   rows={5}
+                  required
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="w-full px-6 py-4 rounded-xl glass border border-[var(--primary)]/20 bg-transparent text-white placeholder:text-[var(--text-secondary)] focus:outline-none focus:border-[var(--primary)] focus:shadow-lg focus:shadow-[var(--primary)]/10 transition-all duration-300 resize-none"
                 />
               </ScrollReveal>
+              
+              {/* Status Message */}
+              {formMessage && (
+                <div className={`text-center py-3 rounded-xl ${
+                  formStatus === "success" 
+                    ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+                    : "bg-red-500/20 text-red-400 border border-red-500/30"
+                }`}>
+                  {formMessage}
+                </div>
+              )}
+              
               <ScrollReveal direction="up" delay={0.3}>
                 <MagneticButton strength={0.2}>
                   <button
                     type="submit"
-                    className="w-full md:w-auto px-12 py-4 rounded-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] text-black font-semibold hover:shadow-xl hover:shadow-[var(--accent)]/30 transition-all duration-300 hover:-translate-y-1 active:scale-95"
+                    disabled={formStatus === "loading"}
+                    className="w-full md:w-auto px-12 py-4 rounded-full bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] text-black font-semibold hover:shadow-xl hover:shadow-[var(--accent)]/30 transition-all duration-300 hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <ScrambleText text="Send Message" />
+                    <ScrambleText text={formStatus === "loading" ? "Sending..." : "Send Message"} />
                   </button>
                 </MagneticButton>
               </ScrollReveal>
