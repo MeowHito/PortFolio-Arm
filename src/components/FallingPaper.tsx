@@ -14,7 +14,7 @@ export default function FallingPaper() {
   const [papers, setPapers] = useState<PaperPiece[]>([]);
 
   useEffect(() => {
-    // Generate paper pieces only on client side
+
     const pieces: PaperPiece[] = Array.from({ length: 15 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
